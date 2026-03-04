@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
-from scraper import scrape_website
+from scraper import scrape_website, check_technical_signals, format_technical_signals
 from analyzer import analyze
 
 load_dotenv()
@@ -23,7 +23,9 @@ async def home(request: Request):
 async def scan(request: Request, url: str = Form(...), provider: str = Form(...)):
     try:
         content = await scrape_website(url)
-        report = await analyze(content, provider)
+        signals = await check_technical_signals(url)
+        technical_signals_text = format_technical_signals(signals)
+        report = await analyze(content, technical_signals_text, provider)
         return templates.TemplateResponse("index.html", {
             "request": request,
             "report": report,

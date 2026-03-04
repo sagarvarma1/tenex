@@ -20,7 +20,7 @@
                 <label for="provider">AI Provider</label>
                 <select id="provider" name="provider">
                     <option value="claude">Claude (Anthropic)</option>
-                    <option value="openai">GPT-4o (OpenAI)</option>
+                    <option value="openai">GPT-5.2 (OpenAI)</option>
                 </select>
             </div>
             <button type="submit" class="btn" id="submitBtn">Scan Company</button>
@@ -45,7 +45,7 @@
                 </div>
                 <div class="score-badge {% if report.ai_readiness_score <= 3 %}score-low{% elif report.ai_readiness_score <= 6 %}score-mid{% else %}score-high{% endif %}">
                     <span class="number">{{ report.ai_readiness_score }}</span>
-                    <span class="label">AI Ready</span>
+                    <span class="label">Overall</span>
                 </div>
             </div>
 
@@ -55,20 +55,27 @@
             </div>
 
             <div class="section">
-                <h3>Score Justification</h3>
-                <p>{{ report.score_justification }}</p>
-            </div>
-
-            {% if report.current_tech_signals %}
-            <div class="section">
-                <h3>Technology Signals Detected</h3>
-                <div class="tech-signals">
-                    {% for signal in report.current_tech_signals %}
-                    <span class="tech-tag">{{ signal }}</span>
-                    {% endfor %}
+                <h3>Dimension Breakdown</h3>
+                {% for dim in report.dimensions %}
+                <div class="dimension">
+                    <div class="dim-header">
+                        <span class="dim-name">{{ dim.name }}</span>
+                        <span class="dim-score {% if dim.score <= 3 %}score-low{% elif dim.score <= 6 %}score-mid{% else %}score-high{% endif %}">{{ dim.score }}/10</span>
+                    </div>
+                    <div class="dim-bar-track">
+                        <div class="dim-bar-fill {% if dim.score <= 3 %}bar-low{% elif dim.score <= 6 %}bar-mid{% else %}bar-high{% endif %}" style="width: {{ dim.score * 10 }}%"></div>
+                    </div>
+                    <p class="dim-justification">{{ dim.justification }}</p>
+                    {% if dim.signals_detected %}
+                    <div class="tech-signals">
+                        {% for signal in dim.signals_detected %}
+                        <span class="tech-tag">{{ signal }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
+                {% endfor %}
             </div>
-            {% endif %}
 
             {% if report.quick_wins %}
             <div class="section">
