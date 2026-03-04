@@ -48,7 +48,7 @@ def _parse_response(text: str) -> ScanReport:
 async def analyze_with_claude(content: str) -> ScanReport:
     client = anthropic.AsyncAnthropic()
     message = await client.messages.create(
-        model="claude-sonnet-4-6-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=2000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": USER_PROMPT.format(content=content)}],
@@ -59,7 +59,7 @@ async def analyze_with_claude(content: str) -> ScanReport:
 async def analyze_with_openai(content: str) -> ScanReport:
     client = openai.AsyncOpenAI()
     response = await client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5.2",
         max_tokens=2000,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
