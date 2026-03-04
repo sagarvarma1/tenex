@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Readiness Scanner</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>AI Readiness Scanner</h1>
+        <p class="subtitle">Enter a company's website to assess their AI adoption potential.</p>
+
+        <form class="scan-form" action="/scan" method="post" id="scanForm">
+            <div class="form-group">
+                <label for="url">Company Website URL</label>
+                <input type="text" id="url" name="url" placeholder="https://example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="provider">AI Provider</label>
+                <select id="provider" name="provider">
+                    <option value="claude">Claude (Anthropic)</option>
+                    <option value="openai">GPT-4o (OpenAI)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn" id="submitBtn">Scan Company</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Scraping website and analyzing with AI...</p>
+            <p style="font-size: 0.85rem; margin-top: 8px;">This may take 15-30 seconds.</p>
+        </div>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if report %}
+        <div class="report">
+            <div class="report-header">
+                <div>
+                    <h2>{{ report.company_name }}</h2>
+                    <span class="url">{{ scanned_url }}</span>
+                </div>
+                <div class="score-badge {% if report.ai_readiness_score <= 3 %}score-low{% elif report.ai_readiness_score <= 6 %}score-mid{% else %}score-high{% endif %}">
+                    <span class="number">{{ report.ai_readiness_score }}</span>
+                    <span class="label">AI Ready</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Company Summary</h3>
+                <p>{{ report.company_summary }}</p>
+            </div>
+
+            <div class="section">
+                <h3>Score Justification</h3>
+                <p>{{ report.score_justification }}</p>
+            </div>
+
+            {% if report.current_tech_signals %}
+            <div class="section">
+                <h3>Technology Signals Detected</h3>
+                <div class="tech-signals">
+                    {% for signal in report.current_tech_signals %}
+                    <span class="tech-tag">{{ signal }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if report.quick_wins %}
+            <div class="section">
+                <h3>Quick Wins (Under 1 Month)</h3>
+                {% for opp in report.quick_wins %}
+                <div class="opportunity">
+                    <div class="opp-header">
+                        <h4>{{ opp.title }}</h4>
+                        <div class="badges">
+                            <span class="badge badge-{{ opp.impact | lower }}">{{ opp.impact }} Impact</span>
+                            <span class="badge badge-quick">Quick Win</span>
+                        </div>
+                    </div>
+                    <p class="opp-desc">{{ opp.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if report.strategic_plays %}
+            <div class="section">
+                <h3>Strategic Plays (3-6 Months)</h3>
+                {% for opp in report.strategic_plays %}
+                <div class="opportunity">
+                    <div class="opp-header">
+                        <h4>{{ opp.title }}</h4>
+                        <div class="badges">
+                            <span class="badge badge-{{ opp.impact | lower }}">{{ opp.impact }} Impact</span>
+                            <span class="badge badge-strategic">Strategic</span>
+                        </div>
+                    </div>
+                    <p class="opp-desc">{{ opp.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.getElementById('scanForm').addEventListener('submit', function() {
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = 'Scanning...';
+            document.getElementById('loading').classList.add('active');
+        });
+    </script>
+</body>
+</html>
