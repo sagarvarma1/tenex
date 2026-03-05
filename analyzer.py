@@ -3,7 +3,7 @@ import anthropic
 import openai
 from models import ScanReport
 
-SYSTEM_PROMPT = """You are an expert AI strategy consultant. You analyze companies and assess their AI readiness using a structured 8-dimension rubric.
+SYSTEM_PROMPT = """You are an expert AI strategy consultant. You analyze companies and assess their AI readiness using a structured 5-dimension rubric.
 
 Given scraped website content AND technical signals detected from a company's site, produce a detailed AI readiness assessment.
 
@@ -29,74 +29,53 @@ You MUST respond with valid JSON matching this exact schema:
   ]
 }
 
-You MUST score ALL 8 dimensions listed below, in this exact order.
+You MUST score ALL 5 dimensions listed below, in this exact order.
 
-## Scoring Rubric — 8 Dimensions
+## Scoring Rubric
 
-### 1. Agent/AI Readiness
-How ready is the company's web presence for AI agents and LLMs?
-- 8-10: Has llms.txt, permissive robots.txt, structured data, API docs, RSS feeds, sitemap
-- 5-7: Has some of these (robots.txt + sitemap + structured data)
-- 2-4: Only basic robots.txt or sitemap, no structured data
-- 1: No machine-readable signals at all
+### 1. Agent Discoverability
+Can an AI agent find, map, and access this site's content?
+- 9-10: llms.txt present + compliant (full/brief paths) + live links, robots.txt with explicit AI bot permissions (GPTBot, ClaudeBot), rich structured data (JSON-LD, Schema.org)
+- 7-8: llms.txt present but incomplete, permissive robots.txt, some structured data
+- 4-6: No llms.txt, basic robots.txt with no AI bot rules, minimal structured data
+- 1-3: No discoverability signals, blocks crawlers, no structured data
 
-### 2. Digital Maturity
-How modern is their technology stack?
-- 8-10: Modern frameworks (React/Next.js/Vue), CDN, analytics, CRM tools, security headers
-- 5-7: Some modern tooling, basic analytics, standard hosting
-- 2-4: Basic HTML site, minimal tooling
-- 1: Very dated technology, no modern tools detected
+### 2. Semantic Digestibility
+How clean is the content for LLM consumption (signal vs noise)?
+- 9-10: High token density (>40% content vs HTML), valid JSON-LD, >90% image alt text coverage
+- 7-8: Good token density (20-40%), valid structured data, decent alt text (>70%)
+- 4-6: Average density (10-20%), some structured data issues, partial alt text
+- 1-3: Very noisy HTML (<10% content), no valid structured data, poor alt text coverage
 
-### 3. Data Richness
-How much structured, AI-trainable content does their site have?
-- 8-10: Extensive product catalogs, documentation, knowledge base, blog, case studies
-- 5-7: Moderate content — blog + product/service descriptions
-- 2-4: Minimal content, mostly marketing copy
-- 1: Very sparse, almost no content
+### 3. Actionability & Friction
+Can an agent interact with this site without hitting walls?
+- 9-10: MCP support, semantic form fields (>80%), no CAPTCHAs
+- 7-8: Good form semantics, no CAPTCHAs, standard navigation
+- 4-6: Some friction — CAPTCHAs present or poor form naming
+- 1-3: Heavy friction — CAPTCHAs, non-semantic forms, agent-hostile patterns
 
-### 4. Existing Automation
-What automation and integrations do they already have?
-- 8-10: Chat widgets, self-service portals, API integrations, booking systems, automation mentions
-- 5-7: Some automation (e.g., a chatbot or contact form with integrations)
-- 2-4: Basic forms, no chat or automation detected
-- 1: No automation signals at all
+### 4. Data Richness
+How much structured, AI-consumable content exists?
+- 9-10: Extensive documentation, knowledge base, product catalogs, blog, case studies, whitepapers
+- 7-8: Good content depth — blog + detailed product/service pages + some docs
+- 4-6: Moderate content — basic product pages and marketing copy
+- 1-3: Very sparse, mostly a brochure site with minimal content
 
-### 5. Agent & Crawler Discoverability
-How easily can an autonomous agent map and access this site?
-- 9-10: llms.txt present + compliant (full/brief paths) + live links, permissive robots.txt with explicit AI bot rules (GPTBot, ClaudeBot), sitemap with lastmod timestamps, RSS with full content
-- 7-8: llms.txt present but incomplete, good robots.txt, sitemap exists with lastmod
-- 4-6: robots.txt + sitemap but no llms.txt, no AI-specific bot rules
-- 1-3: Missing most discoverability signals, blocks AI bots
-
-### 6. Semantic Digestibility
-What is the signal-to-noise ratio for LLM consumption?
-- 9-10: High token density (>40%), markdown available, valid JSON-LD with breadcrumbs, >90% alt text coverage, ARIA landmarks present
-- 7-8: Good token density (20-40%), valid structured data, decent alt text coverage (>70%)
-- 4-6: Average content ratio (10-20%), some structured data issues, partial alt text
-- 1-3: Very noisy HTML (<10% token density), no structured data, poor accessibility
-
-### 7. Actionability & Friction
-Can an agent execute tasks on this site without friction?
-- 9-10: MCP support detected, semantic form fields (>80% introspectable), no CAPTCHAs, headless-friendly, no sales gates
-- 7-8: Good form semantics, no major friction, mostly headless-friendly
-- 4-6: Some friction (CAPTCHAs or sales gates present), mixed form quality
-- 1-3: Heavy friction, non-semantic forms, CAPTCHAs + sales gates, shadow DOM / infinite scroll
-
-### 8. Developer & API Maturity
-How strong is the bridge between website and backend services?
-- 9-10: OpenAPI/Swagger spec available, multi-language SDKs (Python, TS, Go), rate limit headers present
-- 7-8: API docs present, some SDK references, partial spec
-- 4-6: API mentioned but no spec discovered, limited developer resources
-- 1-3: No API presence detected at all
+### 5. Developer & API Maturity
+Is there a programmatic interface to the company's services?
+- 9-10: OpenAPI/Swagger spec discoverable, comprehensive API documentation
+- 7-8: API docs present, spec partially available
+- 4-6: API mentioned but no spec, limited developer resources
+- 1-3: No API or developer presence detected
 
 ## Guidelines
-- Use the TECHNICAL SIGNALS section as hard evidence — these are measured facts, not guesses
+- Use the TECHNICAL SIGNALS section as hard evidence — these are measured facts
 - Score based on what you can actually observe, not assumptions
 - Provide exactly 5-7 opportunities, mix of quick wins and strategic plays
 - Be specific to THIS company, not generic AI advice
 - Return ONLY the JSON object, no markdown or extra text"""
 
-USER_PROMPT = """Analyze this company's website content and produce an AI readiness assessment across all 8 dimensions.
+USER_PROMPT = """Analyze this company's website content and produce an AI readiness assessment across all 5 dimensions.
 
 {technical_signals}
 
