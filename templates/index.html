@@ -7,119 +7,152 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>AI Readiness Scanner</h1>
-        <p class="subtitle">Enter a company's website to assess their AI adoption potential.</p>
-
-        <form class="scan-form" action="/scan" method="post" id="scanForm">
-            <div class="form-group">
-                <label for="url">Company Website URL</label>
-                <input type="text" id="url" name="url" placeholder="https://example.com" required>
+    {% if not report and not error %}
+    <!-- Landing State -->
+    <div class="landing">
+        <div class="landing-inner">
+            <div class="logo">AI Readiness Scanner</div>
+            <p class="landing-sub">Analyze any company's website for AI agent compatibility.</p>
+            <form class="landing-form" action="/scan" method="post" id="scanForm">
+                <div class="input-row">
+                    <input type="text" id="url" name="url" placeholder="https://example.com" required>
+                    <select id="provider" name="provider">
+                        <option value="claude">Claude</option>
+                        <option value="openai">GPT-5.2</option>
+                    </select>
+                    <button type="submit" class="btn" id="submitBtn">Scan</button>
+                </div>
+            </form>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Scanning website...</p>
             </div>
-            <div class="form-group">
-                <label for="provider">AI Provider</label>
-                <select id="provider" name="provider">
-                    <option value="claude">Claude (Anthropic)</option>
-                    <option value="openai">GPT-5.2 (OpenAI)</option>
-                </select>
-            </div>
-            <button type="submit" class="btn" id="submitBtn">Scan Company</button>
-        </form>
+        </div>
+    </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Scraping website and analyzing with AI...</p>
-            <p style="font-size: 0.85rem; margin-top: 8px;">This may take 15-30 seconds.</p>
+    {% else %}
+    <!-- Dashboard State -->
+    <div class="dashboard">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="logo-sm">AI Readiness Scanner</span>
+            </div>
+            <div class="topbar-right">
+                <form action="/scan" method="post" class="topbar-form" id="scanForm">
+                    <input type="text" name="url" placeholder="https://example.com" required value="{{ scanned_url or '' }}">
+                    <select name="provider">
+                        <option value="claude">Claude</option>
+                        <option value="openai">GPT-5.2</option>
+                    </select>
+                    <button type="submit" class="btn-sm" id="submitBtn">Scan</button>
+                </form>
+            </div>
         </div>
 
         {% if error %}
-        <div class="error">{{ error }}</div>
+        <div class="dash-content">
+            <div class="error">{{ error }}</div>
+        </div>
         {% endif %}
 
         {% if report %}
-        <div class="report">
-            <div class="report-header">
-                <div>
-                    <h2>{{ report.company_name }}</h2>
-                    <span class="url">{{ scanned_url }}</span>
+        <div class="dash-content">
+            <!-- Header Row -->
+            <div class="dash-header">
+                <div class="company-info">
+                    <h1>{{ report.company_name }}</h1>
+                    <span class="url-label">{{ scanned_url }}</span>
                 </div>
-                <div class="score-badge {% if report.ai_readiness_score <= 3 %}score-low{% elif report.ai_readiness_score <= 6 %}score-mid{% else %}score-high{% endif %}">
-                    <span class="number">{{ report.ai_readiness_score }}</span>
-                    <span class="label">Overall</span>
+                <div class="overall-score {% if report.ai_readiness_score <= 3 %}score-low{% elif report.ai_readiness_score <= 6 %}score-mid{% else %}score-high{% endif %}">
+                    <span class="overall-number">{{ report.ai_readiness_score }}</span>
+                    <span class="overall-label">/ 10</span>
                 </div>
             </div>
 
-            <div class="section">
-                <h3>Company Summary</h3>
+            <!-- Summary -->
+            <div class="summary-bar">
                 <p>{{ report.company_summary }}</p>
             </div>
 
-            <div class="section">
-                <h3>Dimension Breakdown</h3>
-                {% for dim in report.dimensions %}
-                <div class="dimension">
-                    <div class="dim-header">
-                        <span class="dim-name">{{ dim.name }}</span>
-                        <span class="dim-score {% if dim.score <= 3 %}score-low{% elif dim.score <= 6 %}score-mid{% else %}score-high{% endif %}">{{ dim.score }}/10</span>
+            <!-- Main Grid -->
+            <div class="dash-grid">
+                <!-- Left Column: Dimensions -->
+                <div class="panel">
+                    <div class="panel-header">Score Breakdown</div>
+                    <div class="dimensions-list">
+                        {% for dim in report.dimensions %}
+                        <div class="dim-row">
+                            <div class="dim-row-top">
+                                <span class="dim-label">{{ dim.name }}</span>
+                                <span class="dim-val {% if dim.score <= 3 %}score-low{% elif dim.score <= 6 %}score-mid{% else %}score-high{% endif %}">{{ dim.score }}</span>
+                            </div>
+                            <div class="dim-bar-track">
+                                <div class="dim-bar-fill {% if dim.score <= 3 %}bar-low{% elif dim.score <= 6 %}bar-mid{% else %}bar-high{% endif %}" style="width: {{ dim.score * 10 }}%"></div>
+                            </div>
+                            <p class="dim-just">{{ dim.justification }}</p>
+                            {% if dim.signals_detected %}
+                            <div class="signal-tags">
+                                {% for signal in dim.signals_detected %}
+                                <span class="tag">{{ signal }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="dim-bar-track">
-                        <div class="dim-bar-fill {% if dim.score <= 3 %}bar-low{% elif dim.score <= 6 %}bar-mid{% else %}bar-high{% endif %}" style="width: {{ dim.score * 10 }}%"></div>
+                </div>
+
+                <!-- Right Column: Opportunities -->
+                <div class="panel">
+                    <div class="panel-header">Opportunities</div>
+
+                    {% if report.quick_wins %}
+                    <div class="opp-section">
+                        <div class="opp-section-label">Quick Wins</div>
+                        {% for opp in report.quick_wins %}
+                        <div class="opp-card">
+                            <div class="opp-card-top">
+                                <h4>{{ opp.title }}</h4>
+                                <span class="impact impact-{{ opp.impact | lower }}">{{ opp.impact }}</span>
+                            </div>
+                            <p>{{ opp.description }}</p>
+                        </div>
+                        {% endfor %}
                     </div>
-                    <p class="dim-justification">{{ dim.justification }}</p>
-                    {% if dim.signals_detected %}
-                    <div class="tech-signals">
-                        {% for signal in dim.signals_detected %}
-                        <span class="tech-tag">{{ signal }}</span>
+                    {% endif %}
+
+                    {% if report.strategic_plays %}
+                    <div class="opp-section">
+                        <div class="opp-section-label">Strategic Plays</div>
+                        {% for opp in report.strategic_plays %}
+                        <div class="opp-card">
+                            <div class="opp-card-top">
+                                <h4>{{ opp.title }}</h4>
+                                <span class="impact impact-{{ opp.impact | lower }}">{{ opp.impact }}</span>
+                            </div>
+                            <p>{{ opp.description }}</p>
+                        </div>
                         {% endfor %}
                     </div>
                     {% endif %}
                 </div>
-                {% endfor %}
             </div>
-
-            {% if report.quick_wins %}
-            <div class="section">
-                <h3>Quick Wins (Under 1 Month)</h3>
-                {% for opp in report.quick_wins %}
-                <div class="opportunity">
-                    <div class="opp-header">
-                        <h4>{{ opp.title }}</h4>
-                        <div class="badges">
-                            <span class="badge badge-{{ opp.impact | lower }}">{{ opp.impact }} Impact</span>
-                            <span class="badge badge-quick">Quick Win</span>
-                        </div>
-                    </div>
-                    <p class="opp-desc">{{ opp.description }}</p>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            {% if report.strategic_plays %}
-            <div class="section">
-                <h3>Strategic Plays (3-6 Months)</h3>
-                {% for opp in report.strategic_plays %}
-                <div class="opportunity">
-                    <div class="opp-header">
-                        <h4>{{ opp.title }}</h4>
-                        <div class="badges">
-                            <span class="badge badge-{{ opp.impact | lower }}">{{ opp.impact }} Impact</span>
-                            <span class="badge badge-strategic">Strategic</span>
-                        </div>
-                    </div>
-                    <p class="opp-desc">{{ opp.description }}</p>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
         </div>
         {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Scanning website...</p>
     </div>
 
     <script>
         document.getElementById('scanForm').addEventListener('submit', function() {
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('submitBtn').textContent = 'Scanning...';
+            var btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = '...';
             document.getElementById('loading').classList.add('active');
         });
     </script>
