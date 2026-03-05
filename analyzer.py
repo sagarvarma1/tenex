@@ -42,17 +42,17 @@ Can an AI agent find, map, and access this site's content?
 
 ### 2. Semantic Digestibility
 How clean is the content for LLM consumption (signal vs noise)?
-- 9-10: High token density (>40% content vs HTML), valid JSON-LD, >90% image alt text coverage
-- 7-8: Good token density (20-40%), valid structured data, decent alt text (>70%)
-- 4-6: Average density (10-20%), some structured data issues, partial alt text
-- 1-3: Very noisy HTML (<10% content), no valid structured data, poor alt text coverage
+- 9-10: High token density (>40%), valid JSON-LD, >90% alt text, proper heading hierarchy (H1>H2>H3)
+- 7-8: Good density (20-40%), valid structured data, decent alt text (>70%), mostly proper headings
+- 4-6: Average density (10-20%), some structured data issues, partial alt text, broken heading nesting
+- 1-3: Very noisy HTML (<10%), no valid structured data, poor alt text, no heading structure
 
 ### 3. Actionability & Friction
 Can an agent interact with this site without hitting walls?
-- 9-10: MCP support, semantic form fields (>80%), no CAPTCHAs
-- 7-8: Good form semantics, no CAPTCHAs, standard navigation
-- 4-6: Some friction — CAPTCHAs present or poor form naming
-- 1-3: Heavy friction — CAPTCHAs, non-semantic forms, agent-hostile patterns
+- 9-10: MCP support, semantic form fields (>80%), no CAPTCHAs, no auth walls, supports JSON responses
+- 7-8: Good form semantics, no CAPTCHAs, no auth wall, standard navigation
+- 4-6: Some friction — CAPTCHAs or auth walls present, poor form naming
+- 1-3: Heavy friction — CAPTCHAs + auth walls, non-semantic forms, no JSON support
 
 ### 4. Data Richness
 How much structured, AI-consumable content exists?
@@ -62,11 +62,11 @@ How much structured, AI-consumable content exists?
 - 1-3: Very sparse, mostly a brochure site with minimal content
 
 ### 5. Developer & API Maturity
-Is there a programmatic interface to the company's services?
-- 9-10: OpenAPI/Swagger spec discoverable, comprehensive API documentation
-- 7-8: API docs present, spec partially available
-- 4-6: API mentioned but no spec, limited developer resources
-- 1-3: No API or developer presence detected
+Can an agent programmatically interact with the company's services?
+- 9-10: OpenAPI/Swagger spec discoverable, GraphQL endpoint available, webhook docs present, comprehensive API docs
+- 7-8: API docs present, spec or GraphQL available, some webhook mentions
+- 4-6: API mentioned but no spec or GraphQL, limited developer resources
+- 1-3: No API, GraphQL, or developer presence detected
 
 ## Guidelines
 - Use the TECHNICAL SIGNALS section as hard evidence — these are measured facts
