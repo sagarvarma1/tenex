@@ -35,10 +35,10 @@ You MUST score ALL 5 dimensions listed below, in this exact order.
 
 ### 1. Agent Discoverability
 Can an AI agent find, map, and access this site's content?
-- 9-10: llms.txt present + compliant (full/brief paths) + live links, robots.txt with explicit AI bot permissions (GPTBot, ClaudeBot), rich structured data (JSON-LD, Schema.org)
-- 7-8: llms.txt present but incomplete, permissive robots.txt, some structured data
-- 4-6: No llms.txt, basic robots.txt with no AI bot rules, minimal structured data
-- 1-3: No discoverability signals, blocks crawlers, no structured data
+- 9-10: llms.txt present, robots.txt with explicit AI bot permissions (GPTBot, ClaudeBot allowed), rich structured data (JSON-LD, Schema.org)
+- 7-8: llms.txt present, robots.txt exists with no AI bot blocks, some structured data
+- 4-6: No llms.txt, robots.txt with no AI bot rules, minimal structured data
+- 1-3: No discoverability signals, AI bots blocked, no structured data
 
 ### 2. Semantic Digestibility
 How clean is the content for LLM consumption (signal vs noise)?

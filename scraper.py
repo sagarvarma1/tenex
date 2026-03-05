@@ -21,7 +21,7 @@ def _clean_text(soup: BeautifulSoup) -> str:
 
 
 async def _check_llms_txt(base: str, client: httpx.AsyncClient) -> dict:
-    result = {"present": False, "content": "", "compliant": False, "links_live": 0, "links_total": 0}
+    result = {"present": False, "content": ""}
 
     for path in ["/llms.txt", "/.well-known/llms.txt"]:
         try:
@@ -29,19 +29,6 @@ async def _check_llms_txt(base: str, client: httpx.AsyncClient) -> dict:
             if resp.status_code == 200 and len(resp.text.strip()) > 10:
                 result["present"] = True
                 result["content"] = resp.text[:500]
-                if "/full/" in resp.text or "/brief/" in resp.text:
-                    result["compliant"] = True
-                urls = re.findall(r'https?://\S+', resp.text)
-                result["links_total"] = len(urls)
-                live = 0
-                for u in urls[:10]:
-                    try:
-                        r = await client.head(u, timeout=5.0)
-                        if r.status_code < 400:
-                            live += 1
-                    except Exception:
-                        pass
-                result["links_live"] = live
                 break
         except Exception:
             pass
@@ -292,11 +279,7 @@ async def check_technical_signals(url: str) -> dict:
         # Dimension 1: Agent Discoverability
         "llms_txt": False,
         "llms_txt_content": "",
-        "llms_txt_compliant": False,
-        "llms_txt_links_live": 0,
-        "llms_txt_links_total": 0,
         "robots_txt": False,
-        "robots_txt_permissive": False,
         "robots_txt_ai_bot_rules": [],
         "structured_data": [],
 
@@ -333,19 +316,12 @@ async def check_technical_signals(url: str) -> dict:
         llms = await _check_llms_txt(base, client)
         signals["llms_txt"] = llms["present"]
         signals["llms_txt_content"] = llms["content"]
-        signals["llms_txt_compliant"] = llms["compliant"]
-        signals["llms_txt_links_live"] = llms["links_live"]
-        signals["llms_txt_links_total"] = llms["links_total"]
 
         # robots.txt
         try:
             resp = await client.get(f"{base}/robots.txt")
             if resp.status_code == 200:
                 signals["robots_txt"] = True
-                content = resp.text.lower()
-                disallow_count = content.count("disallow:")
-                has_blanket_disallow = "disallow: /" in content and "disallow: /\n" not in content
-                signals["robots_txt_permissive"] = not has_blanket_disallow and disallow_count < 10
                 signals["robots_txt_ai_bot_rules"] = _check_robots_ai_bots(resp.text)
         except Exception:
             pass
@@ -404,12 +380,9 @@ def format_technical_signals(signals: dict) -> str:
     lines.append(f"\n[Agent Discoverability]")
     lines.append(f"- llms.txt present: {'YES' if signals['llms_txt'] else 'NO'}")
     if signals["llms_txt"]:
-        lines.append(f"  Compliant (full/brief): {'YES' if signals['llms_txt_compliant'] else 'NO'}")
-        lines.append(f"  Links: {signals['llms_txt_links_live']}/{signals['llms_txt_links_total']} live")
         lines.append(f"  Preview: {signals['llms_txt_content'][:200]}")
     lines.append(f"- robots.txt present: {'YES' if signals['robots_txt'] else 'NO'}")
     if signals["robots_txt"]:
-        lines.append(f"  Permissive: {'YES' if signals['robots_txt_permissive'] else 'NO'}")
         if signals["robots_txt_ai_bot_rules"]:
             lines.append(f"  AI bot rules: {', '.join(signals['robots_txt_ai_bot_rules'])}")
         else:
