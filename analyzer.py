@@ -115,7 +115,7 @@ async def analyze_with_openai(content: str, technical_signals: str) -> ScanRepor
     client = openai.AsyncOpenAI()
     response = await client.chat.completions.create(
         model="gpt-5.2",
-        max_tokens=3000,
+        max_completion_tokens=3000,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": USER_PROMPT.format(content=content, technical_signals=technical_signals)},
